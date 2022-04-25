@@ -4,10 +4,26 @@ import React, { Component } from "react"; //imrc: import react component kısayo
 //cc: create class kısayolu
 //export default class Counter extends Component {...} olarak aşağıda export etmeden de yazılabilir.
 class Counter extends Component {
+  constructor() {
+    super();
+    // Component class'ını içeren Counter class'ı burada child class olduğu için önce ana
+    // class'ı super() ile çağırmak gerekiyor.
+
+    this.handleDecrement = this.handleDecrement.bind(this);
+    this.handleIncrement = this.handleIncrement.bind(this);
+    // "this" bu noktada erişilebilir o nedenle handleIncrement metodu burada this'in gösterdiği
+    // Counter class objesine bağlandı. bind metodu yeni bir fonksiyon (obje) döneceği için
+    // dönen değeri de metoda attık. İLGİNÇ DEĞİL Mİ !!!
+    // handleIncrement arrow function tipinde olsaydı buna gerek olmayacaktı.
+  }
+
   // state, react componenti için özel bir keyword'dür. Component için gerekli tüm bilgileri
   // buraya yazıyoruz.
   state = {
-    count: 0,
+    count: 5,
+    count1: 3,
+    //count2: 1,
+    tags: ["tag1", "tag2", "tag3"],
     //imageUrl: "http://picsum.photos/200", //random 200x200 px resim verir
   };
 
@@ -20,6 +36,32 @@ class Counter extends Component {
   styleButtons = {
     fontWeight: "bold",
   };
+
+  handleIncrement = (counter) => {
+    console.log("Gelen parametre: ", counter);
+    // ++this.state.count; // bu react'da işe yaramaz.
+    this.setState({ count: this.state.count + 1 }); // bu şekilde "+ 1" yazılması gerekiyor
+  };
+
+  handleDecrement() {
+    // --this.state.count; // bu react'da işe yaramaz.
+    if (this.state.count > 0) this.setState({ count: this.state.count - 1 });
+  }
+
+  renderTags() {
+    if (this.state.tags.length === 0) return <p>There are no tags!</p>; //return null;
+    return (
+      <ul>
+        {this.state.tags.map((tag) => (
+          <li key={tag}>{tag}</li>
+        ))}
+      </ul>
+    );
+    /**
+     * unique id (key) şu: eğer bir element değişirse react bunu id'sinden
+     * anlıyor ve hemen değişikliği yapıyor. Bu nedenle id lazım.
+     */
+  }
 
   render() {
     //return <h1>Hello World</h1>;
@@ -40,37 +82,45 @@ class Counter extends Component {
     // img src kısmına yazılan text olarak render edilir. bunu dinamik yapmak için
     // state kısmına imageUrl eklendi. Aşağıda src kısmına {} eklenerek içine yazıldı.
     return (
-      <React.Fragment>
+      // <React.Fragment> da kullanılabilir
+      <div>
         {/* <img src={this.state.imageUrl} alt="200x200px image" /> <br /> */}
-
-        <span id="counter1" style={this.styleCounters} className={this.getBadgeClasses()}>
-          {this.formatCount()}
-        </span>
         {/* <span style={{ fontSize: 15, fontWeight: "bold", color: "black" }} className={classes}>
           {this.formatCount()}
         </span> */}
-
-        <button style={this.styleButtons} className="btn btn-danger btn-sm m-1">
-          -
-        </button>
-        <span> / </span>
-        <button style={this.styleButtons} className="btn btn-success btn-sm m-1">
-          +
-        </button>
-        <br />
-
-        <span id="counter2" style={this.styleCounters} className={this.getBadgeClasses()}>
+        <span style={this.styleCounters} className={this.getBadgeClasses()}>
           {this.formatCount()}
         </span>
-        <button style={this.styleButtons} className="btn btn-danger btn-sm m-1">
-          -
+        <button
+          onClick={this.handleDecrement} //burada this.handleDecrement() olursa büyük hata olur
+          style={this.styleButtons}
+          className="btn btn-danger btn-sm m-1"
+        >
+          DEC
         </button>
         <span> / </span>
-        <button style={this.styleButtons} className="btn btn-success btn-sm m-1">
-          +
+        <button
+          //onClick={this.handleIncrement}
+          onClick={() => this.handleIncrement("count1")}
+          style={this.styleButtons}
+          className="btn btn-success btn-sm m-1"
+        >
+          INC
         </button>
         <br />
-      </React.Fragment>
+        {/* ** Dinamik olarak değişkenlere ve metotlara erişim için mutlaka {} lazım 
+            ** Aşağıdaki ifadede uzunluk 0 ise lojik olarak 1, metin de "null" değil yani 1
+            1 && 1 sonucu olarak metin yazılıyor. JavaScript'te boolean olmayan değişkenler
+            arasında da lojik işlemler yapılabiliyor. Fakat firefox'ta denediğim kadarıyla
+            true && "Hi" değerinin sonucu "Hi" iken ifadeler yer değişirse sonuç "true"
+            olarak çıkıyor. ("Hi" olarak verilen string'te en az 1 karakter olmalı)
+            JavaScript engine bu şekilde çalışıyor. Soldan sağa doğru bakılıyor. İfadeler
+            doğru olarak gittiği sürece en sağdaki sonuç olarak çıkıyor. İfadelerden doğru
+            olmayan olduğu an da sonuç o ifade olarak çıkıyor.
+        */}
+        {this.state.tags.length === 0 && "Please create a new tag!"}
+        {this.renderTags()};
+      </div>
     );
   }
 
@@ -81,31 +131,28 @@ class Counter extends Component {
     // default warning tipi beyaz renk yazı yazdığı için modlamak zorunda kaldım.
     if (this.state.count === 0) {
       classes += "warning fst-italic";
-      this.styleCounters.color = "black";
+      //this.styleCounters.color = "black"; // styleCounters read-only hatası verir
     } else {
       classes += "primary";
-      delete this.styleCounters.color; // delete this.styleCounters["color"];
+      //this.styleCounters.color = "white";
+      // delete this.styleCounters.color; // delete this.styleCounters["color"];
     }
 
     return classes;
-
-    {
-      /**
-       * Kurstaki bootstrap eski sürüm bg-primary yerine badge-primary
-       * kullanılıyor. Yeni sürümde değiştirilmiş.
-       * m-2 (margin 2) yandaki elementle araya mesafe koyar
-       * btn-sm: button small
-       *
-       * Bootstrap stillerine kendi sitesinden bakarak farklı dizaynlar
-       * oluşturulabilir.
-       */
-    }
+    /**
+     * Kurstaki bootstrap eski sürüm bg-primary yerine badge-primary
+     * kullanılıyor. Yeni sürümde değiştirilmiş.
+     * m-2 (margin 2) yandaki elementle araya mesafe koyar
+     * btn-sm: button small
+     *
+     * Bootstrap stillerine kendi sitesinden bakarak farklı dizaynlar
+     * oluşturulabilir.
+     */
   }
 
   formatCount() {
     //return this.state.count === 0 ? "Zero" : this.state.count;
     // kursta yukarıdaki yerine aşağıdaki gibi yazmayı tercih etti (bence çok da gerekli değil)
-
     const { count } = this.state;
     return count === 0 ? "Zero" : count;
 
